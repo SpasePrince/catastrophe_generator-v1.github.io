@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сезонный генератор катастроф</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            transition: background 0.8s cubic-bezier(.4,0,.2,1); /* плавная смена цвета */
+        }
+
+        body.winter {
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            transition: background 0.8s cubic-bezier(.4,0,.2,1);
+        }
+
+        body.spring {
+            background: linear-gradient(135deg, #00b894 0%, #00cec9 100%);
+            transition: background 0.8s cubic-bezier(.4,0,.2,1);
+        }
+
+        body.summer {
+            background: linear-gradient(135deg, #fdcb6e 0%, #e17055 100%);
+            transition: background 0.8s cubic-bezier(.4,0,.2,1);
+        }
+
+        body.autumn {
+            background: linear-gradient(135deg, #fab1a0 0%, #e84393 100%);
+            transition: background 0.8s cubic-bezier(.4,0,.2,1);
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 900px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .season-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .season-btn {
+            padding: 15px 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .season-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .season-btn.active {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.6);
+            box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+        }
+
+        .generate-btn {
+            display: block;
+            width: 200px;
+            padding: 15px;
+            margin: 30px auto;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.3);
+        }
+
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+        }
+
+        .generate-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .disaster-output {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .disaster-title {
+            font-size: 24px;
+            color: #ff6b6b;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .disaster-description {
+            color: white;
+            font-size: 16px;
+            line-height: 1.6;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .disaster-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-label {
+            color: #ff6b6b;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .stat-value {
+            color: white;
+            font-size: 18px;
+            margin-top: 5px;
+        }
+
+        .casualties {
+            background: rgba(255, 107, 107, 0.2);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+        }
+
+        .season-info {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: white;
+            font-size: 14px;
+        }
+
+        .population-input {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .population-input label {
+            display: block;
+            color: white;
+            font-size: 16px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .population-input input {
+            width: 100%;
+            max-width: 300px;
+            padding: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .population-input input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .population-input input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.6);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 18px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        .disaster-counter {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+            margin-top: 20px;
+        }
+
+        /* Стили для ползунков, подходящие к дизайну и без подсвечивания */
+        .population-input .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            margin-bottom: 0;
+        }
+        .population-input .slider-row label {
+            flex: 0 0 130px;
+            text-align: left;
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .population-input .slider-row input[type="range"] {
+            flex: 1 1 auto;
+            margin: 0 10px 0 10px;
+            min-width: 0;
+            background: transparent;
+            height: 12px;
+        }
+        .population-input .slider-row span {
+            flex: 0 0 32px;
+            text-align: right;
+            min-width: 32px;
+            display: inline-block;
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        /* Новый стиль для блока слайдеров: чуть выше */
+        .population-input.slider-block {
+            margin-bottom: 10px;
+            margin-top: -10px;
+            padding-top: 0;
+            padding-bottom: 10px;
+        }
+        /* Glassmorphism slider styles */
+        .glass-slider-block {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+            margin-bottom: 18px;
+            margin-top: 24px; /* Было -8px, теперь 24px для смещения вниз */
+            padding: 18px 18px 10px 18px;
+            border-radius: 18px;
+            background: rgba(255,255,255,0.13);
+            box-shadow: 0 8px 32px 0 rgba(31,38,135,0.18);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.18);
+        }
+        .glass-slider-row {
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+        .glass-slider-row label {
+            flex: 0 0 140px;
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: left;
+            margin-right: 10px;
+            white-space: nowrap;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+        .glass-slider-row input[type="range"] {
+            flex: 1 1 0;
+            margin: 0 10px;
+            min-width: 0;
+            background: transparent;
+            height: 16px;
+            box-sizing: border-box;
+            vertical-align: middle;
+            padding: 0;
+            display: block;
+        }
+        .glass-slider-row span {
+            flex: 0 0 36px;
+            text-align: right;
+            min-width: 36px;
+            display: inline-block;
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.12);
+        }
+        /* Glassmorphism range track and thumb */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 10px;
+            background: rgba(255,255,255,0.18);
+            border-radius: 8px;
+            outline: none;
+            margin: 0;
+            padding: 0;
+            box-shadow: 0 1px 8px rgba(0,0,0,0.10);
+            transition: background 0.3s;
+            backdrop-filter: blur(8px);
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #fff;
+            border: none;
+            box-shadow: none;
+            cursor: pointer;
+            transition: background 0.2s, border 0.2s;
+            backdrop-filter: blur(2px);
+            margin-top: -9px; /* Было -7px, теперь -9px для идеального центрирования */
+        }
+        input[type="range"]:active::-webkit-slider-thumb {
+            background: #fff;
+            border: none;
+            box-shadow: none;
+        }
+        input[type="range"]:focus::-webkit-slider-thumb {
+            background: #fff;
+            border: none;
+            box-shadow: none;
+        }
+        input[type="range"]::-moz-range-thumb {
+            background: #fff;
+            border: none;
+            box-shadow: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s, border 0.2s;
+            backdrop-filter: blur(2px);
+        }
+        input[type="range"]:active::-moz-range-thumb {
+            background: #fff;
+            border: none;
+            box-shadow: none;
+        }
+        input[type="range"]:focus::-moz-range-thumb {
+            background: #fff;
+            border: none;
+            box-shadow: none;
+        }
+        input[type="range"]::-ms-thumb {
+            background: #fff;
+            border: none;
+            box-shadow: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: background 0.2s, border 0.2s;
+            backdrop-filter: blur(2px);
+            margin-top: 0px; /* Для IE/Edge */
+        }
+        input[type="range"]:active::-ms-thumb {
+            background: #fff;
+            border: none;
+            box-shadow: none;
+        }
+        input[type="range"]:focus::-ms-thumb {
+            background: #fff;
+            border: none;
+            box-shadow: none;
+        }
+        input[type="range"]::-moz-range-track {
+            height: 10px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.18);
+        }
+        /* Для Firefox: центрируем кружок */
+        input[type="range"]::-moz-range-thumb {
+            margin-top: 0px;
+        }
+        input[type="range"]::-ms-thumb {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.7);
+            box-shadow: 0 4px 16px 0 rgba(31,38,135,0.18), 0 0 0 2px #ff6b6b;
+            border: 2px solid #3fd0c9;
+            cursor: pointer;
+            transition: background 0.2s, border 0.2s;
+            backdrop-filter: blur(2px);
+            margin-top: 0px; /* Для IE/Edge */
+        }
+        input[type="range"]::-ms-tooltip {
+            display: none;
+        }
+        input[type="range"]::-ms-fill-lower,
+        input[type="range"]::-ms-fill-upper {
+            background: rgba(255,255,255,0.18);
+        }
+        input[type="range"] {
+            background: rgba(255,255,255,0.18);
+        }
+
+        @media (max-width: 600px) {
+            .glass-slider-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+            }
+            .glass-slider-row label {
+                flex: none;
+                margin-right: 0;
+                margin-bottom: 4px;
+                text-align: left;
+                width: 100%;
+            }
+            .glass-slider-row input[type="range"] {
+                flex: none;
+                margin: 0;
+                width: 100%;
+                min-width: 0;
+                box-sizing: border-box;
+            }
+            .glass-slider-row span {
+                flex: none;
+                min-width: 0;
+                text-align: left;
+                margin: 0 0 0 0;
+                align-self: flex-start;
+                display: inline-block;
+            }
+        }
+        @media (max-width: 480px) {
+            .glass-slider-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+            }
+            .glass-slider-row label {
+                flex: none;
+                margin-right: 0;
+                margin-bottom: 4px;
+                text-align: left;
+                width: 100%;
+            }
+            .glass-slider-row input[type="range"] {
+                flex: none;
+                margin: 0;
+                width: 100%;
+                min-width: 0;
+                box-sizing: border-box;
+            }
+            .glass-slider-row span {
+                flex: none;
+                min-width: 0;
+                text-align: left;
+                margin: 0 0 0 0;
+                align-self: flex-start;
+                display: inline-block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌪️ Сезонный генератор катастроф</h1>
+        
+        <div class="season-selector">
+            <button class="season-btn" data-season="winter">❄️ Зима</button>
+            <button class="season-btn" data-season="spring">🌸 Весна</button>
+            <button class="season-btn" data-season="summer">☀️ Лето</button>
+            <button class="season-btn" data-season="autumn">🍂 Осень</button>
+        </div>
+
+        <div class="season-info" id="seasonInfo">
+            Выберите время года для генерации подходящих катастроф
+        </div>
+
+        <div class="population-input">
+            <label for="population">Население страны:</label>
+            <input type="text" id="population" placeholder="Введите численность населения" inputmode="numeric">
+        </div>
+
+        <div class="glass-slider-block">
+            <div class="glass-slider-row">
+                <label for="firefightersStrength">Сила пожарных:</label><span id="firefightersValue" style="margin-left:8px;">5</span>
+                <input type="range" id="firefightersStrength" min="1" max="10" value="5">
+            </div>
+            <div class="glass-slider-row">
+                <label for="medicsStrength">Сила медиков:</label><span id="medicsValue" style="margin-left:8px;">5</span>
+                <input type="range" id="medicsStrength" min="1" max="10" value="5">
+            </div>
+        </div>
+
+        <button class="generate-btn" onclick="generateDisaster()" disabled>
+            Генерировать катастрофу
+        </button>
+
+        <div class="disaster-output" id="output">
+            <div class="disaster-description" style="color: rgba(255,255,255,0.7);">
+                Выберите сезон и нажмите кнопку для генерации катастрофы
+            </div>
+        </div>
+
+        <div class="disaster-counter" id="counter">
+            Всего сгенерировано: 0 катастроф
+        </div>
+    </div>
+
+    <script>
+        class SeasonalDisasterNeuralNetwork {
+            constructor() {
+                this.currentSeason = null;
+                this.generatedCount = 0;
+                this.lastGeneratedDisasters = [];
+                
+                // Список всех возможных катастроф
+                this.disasters = [
+                    {
+                        name: "Эпидемия",
+                        icon: "🦠",
+                        descriptions: [
+                            "Вирусная эпидемия быстро распространяется среди населения.",
+                            "Неизвестный патоген поражает иммунную систему людей.",
+                            "Заразная болезнь охватывает регион со скоростью лесного пожара."
+                        ]
+                    },
+                    {
+                        name: "Пожар",
+                        icon: "🔥",
+                        descriptions: [
+                            "Масштабный пожар охватывает жилые районы и лесные массивы.",
+                            "Неконтролируемое пламя уничтожает все на своем пути.",
+                            "Огненная стихия разрастается с каждой минутой."
+                        ]
+                    },
+                    {
+                        name: "Метеорит",
+                        icon: "☄️",
+                        descriptions: [
+                            "Крупный метеорит врезается в земную поверхность.",
+                            "Космическое тело создает огромный кратер при падении.",
+                            "Астероид проникает в атмосферу и падает на землю."
+                        ]
+                    },
+                    {
+                        name: "Землетрясение",
+                        icon: "🌍",
+                        descriptions: [
+                            "Мощные подземные толчки сотрясают всю территорию.",
+                            "Тектонические плиты смещаются, вызывая разрушения.",
+                            "Земля трескается под воздействием сейсмических волн."
+                        ]
+                    },
+                    {
+                        name: "Торнадо",
+                        icon: "🌪️",
+                        descriptions: [
+                            "Разрушительный смерч движется через населенные пункты.",
+                            "Воронкообразный вихрь поднимает в воздух все на своем пути.",
+                            "Мощный торнадо сносит здания и автомобили."
+                        ]
+                    },
+                    {
+                        name: "Наводнение",
+                        icon: "🌊",
+                        descriptions: [
+                            "Проливные дожди вызывают катастрофическое наводнение.",
+                            "Водные потоки затапливают низменные участки.",
+                            "Разлившиеся реки покрывают огромные территории."
+                        ]
+                    }
+                ];
+                
+                // Сезонные модификаторы для количества жертв
+                this.seasonalCasualtyModifiers = {
+                    winter: {
+                        "Эпидемия": 1.5,    // Зимой эпидемии опаснее
+                        "Пожар": 1.2,       // Отопительный сезон
+                        "Метеорит": 1.0,    // Не зависит от сезона
+                        "Землетрясение": 1.1, // Люди больше дома
+                        "Торнадо": 0.3,     // Редки зимой
+                        "Наводнение": 0.8   // Меньше дождей
+                    },
+                    spring: {
+                        "Эпидемия": 1.2,    // Весенний иммунодефицит
+                        "Пожар": 0.8,       // Меньше пожаров
+                        "Метеорит": 1.0,    // Не зависит от сезона
+                        "Землетрясение": 1.0, // Базовый уровень
+                        "Торнадо": 1.8,     // Пик активности
+                        "Наводнение": 1.6   // Паводки
+                    },
+                    summer: {
+                        "Эпидемия": 1.3,    // Жара способствует распространению
+                        "Пожар": 2.0,       // Пик пожарной опасности
+                        "Метеорит": 1.0,    // Не зависит от сезона
+                        "Землетрясение": 1.0, // Базовый уровень
+                        "Торнадо": 1.4,     // Высокая активность
+                        "Наводнение": 1.2   // Ливни
+                    },
+                    autumn: {
+                        "Эпидемия": 1.4,    // Осенние эпидемии
+                        "Пожар": 1.1,       // Сухая растительность
+                        "Метеорит": 1.0,    // Не зависит от сезона
+                        "Землетрясение": 1.0, // Базовый уровень
+                        "Торнадо": 1.0,     // Средняя активность
+                        "Наводнение": 1.3   // Осенние дожди
+                    }
+                };
+                
+                // Информация о сезонах
+                this.seasonInfo = {
+                    winter: "Зима увеличивает смертность от эпидемий и пожаров. Торнадо редки.",
+                    spring: "Весна - сезон паводков и торнадо. Пик природных катастроф.",
+                    summer: "Лето - время масштабных пожаров и эпидемий. Высокая опасность.",
+                    autumn: "Осень приносит эпидемии и наводнения. Средний уровень опасности."
+                };
+            }
+
+            setSeason(season) {
+                this.currentSeason = season;
+            }
+
+            generateDisaster(population, firefightersStrength = 5, medicsStrength = 5) {
+                if (!this.currentSeason || !population) return null;
+
+                // Выбираем случайную катастрофу
+                let selectedDisaster;
+                let attempts = 0;
+                
+                // Пытаемся выбрать катастрофу, которая не повторяется слишком часто
+                do {
+                    selectedDisaster = this.disasters[Math.floor(Math.random() * this.disasters.length)];
+                    attempts++;
+                } while (attempts < 10 && this.lastGeneratedDisasters.includes(selectedDisaster.name));
+
+                // Добавляем в историю последних катастроф
+                this.lastGeneratedDisasters.push(selectedDisaster.name);
+                if (this.lastGeneratedDisasters.length > 3) {
+                    this.lastGeneratedDisasters.shift();
+                }
+
+                // Выбираем случайное описание
+                const description = selectedDisaster.descriptions[Math.floor(Math.random() * selectedDisaster.descriptions.length)];
+
+                // Генерируем параметры
+                const baseIntensity = +(Math.random() * 9 + 1).toFixed(1); // от 1.0 до 10.0 с десятыми
+                const duration = Math.floor(Math.random() * 168) + 1; // До недели
+                const affectedArea = Math.floor(Math.random() * 2000) + 100;
+
+                // Рассчитываем максимальные жертвы (4% от населения)
+                const maxCasualties = Math.floor(population * 0.04);
+                const maxInjured = Math.floor(population * 0.08);
+
+                // Генерируем базовые жертвы (случайное число от 0.1% до 2% населения)
+                const baseCasualties = Math.floor(population * (0.001 + Math.random() * 0.019));
+                
+                // Применяем сезонный модификатор к количеству жертв
+                const seasonalModifier = this.seasonalCasualtyModifiers[this.currentSeason][selectedDisaster.name];
+                let casualties = Math.floor(baseCasualties * seasonalModifier);
+
+                // Коррекция по силе пожарных и медиков (glassmorphism sliders)
+                let firefighterReduction = 1 - (firefightersStrength * 0.043);
+                let medicReduction = 1 - (medicsStrength * 0.033);
+                firefighterReduction = Math.max(firefighterReduction, 0.1);
+                medicReduction = Math.max(medicReduction, 0.1);
+
+                casualties = Math.floor(casualties * firefighterReduction * medicReduction);
+
+                // Ограничиваем максимумом
+                casualties = Math.min(casualties, maxCasualties);
+                
+                // Раненые (от 1.5 до 3.5 раз больше жертв)
+                let injured = Math.floor(casualties * (1.5 + Math.random() * 2));
+                injured = Math.min(injured, maxInjured);
+
+                // Увеличиваем счетчик
+                this.generatedCount++;
+
+                // Рассчитываем точные проценты с двумя знаками после запятой
+                const casualtyPercent = ((casualties / population) * 100);
+                const injuredPercent = ((injured / population) * 100);
+
+                // --- Международное воздействие ---
+                let internationalImpact = "Минимальное";
+                if (baseIntensity >= 9) {
+                    internationalImpact = "Высокое";
+                } else if (baseIntensity >= 7) {
+                    internationalImpact = "Среднее";
+                } else if (baseIntensity >= 5) {
+                    internationalImpact = "Малое";
+                }
+
+                // --- Жертвы и раненые в других странах ---
+                let foreignCasualties = 0;
+                let foreignInjured = 0;
+                let foreignCasualtyPercent = "0.00";
+                let foreignInjuredPercent = "0.00";
+                if (baseIntensity >= 7) {
+                    const over = baseIntensity - 7 + 1; // при 7 баллах over=1, при 8 over=2 и т.д.
+                    // Максимум жертв и раненых в других странах
+                    const maxForeignCasualties = Math.floor(population * (0.01 * over));
+                    const maxForeignInjured = Math.floor(population * (0.019 * over));
+                    // Случайное число в диапазоне 60-100% от максимума
+                    foreignCasualties = Math.floor(maxForeignCasualties * (0.6 + Math.random() * 0.4));
+                    foreignInjured = Math.floor(maxForeignInjured * (0.6 + Math.random() * 0.4));
+                    foreignCasualtyPercent = ((foreignCasualties / population) * 100).toFixed(2);
+                    foreignInjuredPercent = ((foreignInjured / population) * 100).toFixed(2);
+                }
+
+                return {
+                    name: selectedDisaster.name,
+                    description: description,
+                    icon: selectedDisaster.icon,
+                    intensity: baseIntensity,
+                    casualties: casualties,
+                    injured: injured,
+                    duration: duration,
+                    affectedArea: affectedArea,
+                    seasonalModifier: seasonalModifier,
+                    count: this.generatedCount,
+                    population: population,
+                    casualtyPercent: casualtyPercent.toFixed(2),
+                    injuredPercent: injuredPercent.toFixed(2),
+                    internationalImpact: internationalImpact,
+                    foreignCasualties: foreignCasualties,
+                    foreignInjured: foreignInjured,
+                    foreignCasualtyPercent: foreignCasualtyPercent,
+                    foreignInjuredPercent: foreignInjuredPercent
+                };
+            }
+
+            getSeasonInfo(season) {
+                return this.seasonInfo[season] || "";
+            }
+        }
+
+        // Создание экземпляра нейросети
+        const neuralNetwork = new SeasonalDisasterNeuralNetwork();
+        let currentSeason = null;
+
+        // Функция для извлечения чисел из строки
+        function extractNumber(str) {
+            return parseInt(str.replace(/[^\d]/g, ''));
+        }
+
+        // Функция для форматирования числа с разделителями
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+        }
+
+        // Обработка выбора сезона
+        document.addEventListener('DOMContentLoaded', function() {
+            const seasonButtons = document.querySelectorAll('.season-btn');
+            const generateBtn = document.querySelector('.generate-btn');
+            const seasonInfo = document.getElementById('seasonInfo');
+            const populationInput = document.getElementById('population');
+            const body = document.body;
+            const firefightersSlider = document.getElementById('firefightersStrength');
+            const medicsSlider = document.getElementById('medicsStrength');
+            const firefightersValue = document.getElementById('firefightersValue');
+            const medicsValue = document.getElementById('medicsValue');
+
+            function checkFormValidity() {
+                const hasSeasonSelected = currentSeason !== null;
+                const populationValue = extractNumber(populationInput.value);
+                const hasPopulation = populationValue && populationValue > 0;
+                generateBtn.disabled = !(hasSeasonSelected && hasPopulation);
+            }
+
+            seasonButtons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Удаляем активный класс у всех кнопок
+                    seasonButtons.forEach(b => b.classList.remove('active'));
+                    
+                    // Добавляем активный класс текущей кнопке
+                    this.classList.add('active');
+                    
+                    // Получаем выбранный сезон
+                    currentSeason = this.dataset.season;
+                    neuralNetwork.setSeason(currentSeason);
+                    
+                    // Обновляем информацию о сезоне
+                    seasonInfo.textContent = neuralNetwork.getSeasonInfo(currentSeason);
+                    
+                    // Меняем фон в зависимости от сезона
+                    body.className = currentSeason;
+                    
+                    // Проверяем валидность формы
+                    checkFormValidity();
+                });
+            });
+
+            // Обработка ввода населения
+            populationInput.addEventListener('input', function() {
+                // Извлекаем только цифры
+                const numericValue = extractNumber(this.value);
+                
+                // Если есть числовое значение, форматируем его
+                if (numericValue) {
+                    this.value = formatNumber(numericValue);
+                } else {
+                    this.value = '';
+                }
+                
+                checkFormValidity();
+            });
+
+            // Обработка paste события для корректной работы с большими числами
+            populationInput.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+                const numericValue = extractNumber(pastedText);
+                
+                if (numericValue) {
+                    this.value = formatNumber(numericValue);
+                    checkFormValidity();
+                }
+            });
+
+            firefightersSlider.addEventListener('input', function() {
+                firefightersValue.textContent = this.value;
+            });
+            medicsSlider.addEventListener('input', function() {
+                medicsValue.textContent = this.value;
+            });
+
+            console.log('Сезонный генератор катастроф загружен!');
+        });
+
+        // Генерация катастрофы
+        function generateDisaster() {
+            if (!currentSeason) return;
+
+            const populationInput = document.getElementById('population');
+            const population = extractNumber(populationInput.value);
+
+            // Получаем значения ползунков
+            const firefightersStrength = parseInt(document.getElementById('firefightersStrength').value, 10);
+            const medicsStrength = parseInt(document.getElementById('medicsStrength').value, 10);
+
+            if (!population || population <= 0) {
+                alert('Пожалуйста, введите корректное население страны');
+                return;
+            }
+
+            const outputDiv = document.getElementById('output');
+            const counterDiv = document.getElementById('counter');
+
+            outputDiv.innerHTML = '<div class="loading">Нейросеть анализирует сезонные данные...</div>';
+
+            setTimeout(() => {
+                // Передаем значения ползунков в генератор
+                const disaster = neuralNetwork.generateDisaster(population, firefightersStrength, medicsStrength);
+
+                if (!disaster) {
+                    outputDiv.innerHTML = '<div class="disaster-description">Ошибка генерации катастрофы</div>';
+                    return;
+                }
+                
+                // Обновляем счетчик
+                counterDiv.textContent = `Всего сгенерировано: ${disaster.count} катастроф`;
+                
+                outputDiv.innerHTML = `
+                    <div class="disaster-title">
+                        ${disaster.icon} ${disaster.name}
+                    </div>
+                    <div class="disaster-description">
+                        ${disaster.description}
+                    </div>
+                    <div class="disaster-stats">
+                        <div class="stat-item">
+                            <div class="stat-label">Население</div>
+                            <div class="stat-value">${formatNumber(disaster.population)}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Интенсивность</div>
+                            <div class="stat-value">${disaster.intensity.toFixed(1)}/10</div>
+                        </div>
+                        <div class="stat-item casualties">
+                            <div class="stat-label">Жертвы</div>
+                            <div class="stat-value">${formatNumber(disaster.casualties)} (${disaster.casualtyPercent}%)</div>
+                        </div>
+                        <div class="stat-item casualties">
+                            <div class="stat-label">Раненые</div>
+                            <div class="stat-value">${formatNumber(disaster.injured)} (${disaster.injuredPercent}%)</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Длительность</div>
+                            <div class="stat-value">${disaster.duration} ч</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Площадь</div>
+                            <div class="stat-value">${disaster.affectedArea} км²</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Сезонный фактор</div>
+                            <div class="stat-value">×${disaster.seasonalModifier}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Международное воздействие</div>
+                            <div class="stat-value">${disaster.internationalImpact}</div>
+                        </div>
+                        ${
+                            disaster.intensity > 7
+                            ? `<div class="stat-item">
+                                    <div class="stat-label">Жертвы в других странах</div>
+                                    <div class="stat-value">${formatNumber(disaster.foreignCasualties)} (${disaster.foreignCasualtyPercent}%)</div>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-label">Раненые в других странах</div>
+                                    <div class="stat-value">${formatNumber(disaster.foreignInjured)} (${disaster.foreignInjuredPercent}%)</div>
+                                </div>`
+                            : ''
+                        }
+                    </div>
+                `;
+            }, 1800);
+        }
+    </script>
+</body>
+</html>
